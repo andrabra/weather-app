@@ -26,6 +26,10 @@ body {
   font-weight: bold;
 }
 
+.m-t-20 {
+  margin-top: 20px;
+}
+
 .error {
   color: #d83c31;
   fill: #d83c31;

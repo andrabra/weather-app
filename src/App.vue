@@ -1,59 +1,71 @@
-<script>
+<script setup>
+import { ref, computed } from 'vue';
 import axios from 'axios';
 
-export default {
-  data() {
-    return {
-      city: '',
-      error: null,
-      info: null,
-    };
-  },
-  computed: {
-    cityName() {
-      return `"${this.city}"`;
-    },
-    showTemp() {
-      if (!this.info) {
-        return '';
-      }
-      return `Температура: ${this.info.main.temp}`;
-    },
-    showHumidity() {
-      return `Влажность: ${this.info.main.humidity}`;
-    },
-    showPressure() {
-      return `Давление: ${this.info.main.pressure}`;
-    },
-    showWind() {
-      return `Скорость ветра: ${this.info.wind.speed}`;
-    },
-    showFeelsLike() {
-      return `Ощущается как: ${this.info.main.feels_like}`;
-    },
-    showMinTemp() {
-      return `Минимальная температура: ${this.info.main.temp_min}`;
-    },
-    showMaxTemp() {
-      return `Максимальная температура: ${this.info.main.temp_max}`;
-    },
-  },
-  methods: {
-    getWeather() {
-      if (this.city.trim().length < 2) {
-        this.error = 'Название должно содержать больше 2-х символов';
-        return false;
-      } else {
-        this.error = null;
-        axios
-          .get(
-            `https://api.openweathermap.org/data/2.5/weather?q=${this.city}&units=metric&appid=ea9eab706e690b5cf17e970dc26d5b22`
-          )
-          .then((res) => (this.info = res.data))
-          .catch((err) => (this.error = err.message));
-      }
-    },
-  },
+// Реактивные переменные
+const city = ref('');
+const error = ref(null);
+const info = ref(null);
+
+// Вычисляемые свойства
+const cityName = computed(() => `"${city.value}"`);
+
+const showTemp = computed(() => {
+  if (!info.value) return '';
+  return `Температура: ${info.value.main.temp}°C`;
+});
+
+const showHumidity = computed(() => {
+  if (!info.value) return '';
+  return `Влажность: ${info.value.main.humidity}%`;
+});
+
+const showPressure = computed(() => {
+  if (!info.value) return '';
+  return `Давление: ${info.value.main.pressure} hPa`;
+});
+
+const showWind = computed(() => {
+  if (!info.value) return '';
+  return `Скорость ветра: ${info.value.wind.speed} м/с`;
+});
+
+const showFeelsLike = computed(() => {
+  if (!info.value) return '';
+  return `Ощущается как: ${info.value.main.feels_like}°C`;
+});
+
+const showMinTemp = computed(() => {
+  if (!info.value) return '';
+  return `Минимальная температура: ${info.value.main.temp_min}°C`;
+});
+
+const showMaxTemp = computed(() => {
+  if (!info.value) return '';
+  return `Максимальная температура: ${info.value.main.temp_max}°C`;
+});
+
+// Методы
+const getWeather = async () => {
+  if (city.value.trim().length < 2) {
+    error.value = 'Название должно содержать больше 2-х символов';
+    return false;
+  }
+
+  error.value = null;
+
+  try {
+    const response = await axios.get(
+      `https://api.openweathermap.org/data/2.5/weather?q=${city.value}&units=metric&appid=ea9eab706e690b5cf17e970dc26d5b22&lang=ru`
+    );
+    info.value = response.data;
+  } catch (err) {
+    if (err.response?.data.cod === '404') {
+      error.value = 'Город не найден. Проверьте название.';
+    } else {
+      error.value = err.message;
+    }
+  }
 };
 </script>
 
@@ -67,13 +79,11 @@ export default {
       </span>
     </p>
 
-    <!-- <div class="actions-wrapper"> -->
     <form @submit.prevent="getWeather" class="actions-wrapper">
       <input v-model="city" type="text" placeholder="Введите город..." />
       <button v-if="city" type="submit">Получить погоду</button>
     </form>
-    <!-- </div> -->
-    <p v-if="error" class="error">{{ error }}</p>
+    <p v-if="error" class="error m-t-20">{{ error }}</p>
 
     <div v-if="info" class="info-wrapper">
       <p>{{ showTemp }}</p>
