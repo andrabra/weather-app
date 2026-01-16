@@ -1,14 +1,41 @@
 <script>
+import axios from 'axios';
+
 export default {
   data() {
     return {
       city: '',
       error: null,
+      info: null,
     };
   },
   computed: {
     cityName() {
       return `"${this.city}"`;
+    },
+    showTemp() {
+      if (!this.info) {
+        return '';
+      }
+      return `Температура: ${this.info.main.temp}`;
+    },
+    showHumidity() {
+      return `Влажность: ${this.info.main.humidity}`;
+    },
+    showPressure() {
+      return `Давление: ${this.info.main.pressure}`;
+    },
+    showWind() {
+      return `Скорость ветра: ${this.info.wind.speed}`;
+    },
+    showFeelsLike() {
+      return `Ощущается как: ${this.info.main.feels_like}`;
+    },
+    showMinTemp() {
+      return `Минимальная температура: ${this.info.main.temp_min}`;
+    },
+    showMaxTemp() {
+      return `Максимальная температура: ${this.info.main.temp_max}`;
     },
   },
   methods: {
@@ -18,6 +45,12 @@ export default {
         return false;
       } else {
         this.error = null;
+        axios
+          .get(
+            `https://api.openweathermap.org/data/2.5/weather?q=${this.city}&units=metric&appid=ea9eab706e690b5cf17e970dc26d5b22`
+          )
+          .then((res) => (this.info = res.data))
+          .catch((err) => (this.error = err.message));
       }
     },
   },
@@ -27,18 +60,30 @@ export default {
 <template>
   <div class="wrapper">
     <h1>Погода</h1>
-    <p>
+    <p class="description">
       Узнать погоду в <span v-if="!city">вашем городе</span>
       <span v-else
         >городе <span class="bold">{{ cityName }}</span>
       </span>
     </p>
 
-    <div class="actions-wrapper">
+    <!-- <div class="actions-wrapper"> -->
+    <form @submit.prevent="getWeather" class="actions-wrapper">
       <input v-model="city" type="text" placeholder="Введите город..." />
-      <button v-if="city" @click="getWeather()">Получить погоду</button>
-    </div>
+      <button v-if="city" type="submit">Получить погоду</button>
+    </form>
+    <!-- </div> -->
     <p v-if="error" class="error">{{ error }}</p>
+
+    <div v-if="info" class="info-wrapper">
+      <p>{{ showTemp }}</p>
+      <p>{{ showHumidity }}</p>
+      <p>{{ showPressure }}</p>
+      <p>{{ showWind }}</p>
+      <p>{{ showFeelsLike }}</p>
+      <p>{{ showMinTemp }}</p>
+      <p>{{ showMaxTemp }}</p>
+    </div>
   </div>
 </template>
 
@@ -61,7 +106,7 @@ export default {
   margin-top: 50px;
 }
 
-.wrapper p {
+.wrapper .description {
   margin-top: 20px;
 }
 
@@ -102,5 +147,14 @@ export default {
   align-items: center;
   gap: 15px;
   max-width: 400px;
+}
+
+.wrapper .info-wrapper {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 5px;
 }
 </style>
